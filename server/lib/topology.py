@@ -239,29 +239,54 @@ def build_topology(cluster_id: int, cluster: dict) -> dict:
             "style": {"strokeDasharray": "5,5", "stroke": "#b45309"},
         })
 
-    # Create schema nodes and link them to topics
+    # Create schema nodes grouped by schema ID.
+    # When multiple subjects share the same schema ID (same content), a single
+    # node is created and connected to all related topic nodes.
+    topic_node_ids = {n["id"] for n in nodes if n.get("type") == "topic"}
+
+    # Group schemas by their numeric Schema Registry ID
+    schema_id_groups: dict[Any, list[dict]] = {}
     for s in state["schemas"]:
+        sid = s.get("id")
         topic_name = s.get("topicName")
-        if topic_name and any(n["id"] == f"topic:{topic_name}" for n in nodes):
-            schema_id = f"schema:{s['subject']}"
-            nodes.append({
-                "id": schema_id,
-                "type": "schema",
-                "data": {
-                    "label": s["subject"],
-                    "subLabel": f"v{s['version']}",
-                    "schemaType": s.get("type", "AVRO"),
-                    "subject": s["subject"],
-                    "version": s["version"]
-                }
-            })
-            # Link schema to topic with a dashed edge
+        if not topic_name or f"topic:{topic_name}" not in topic_node_ids:
+            continue
+        if sid is None:
+            # Fallback: no schema ID available, treat subject as unique key
+            sid = f"_subj_{s['subject']}"
+        schema_id_groups.setdefault(sid, []).append(s)
+
+    for sid, group in schema_id_groups.items():
+        subjects = [g["subject"] for g in group]
+        topic_names_for_schema = list(dict.fromkeys(g["topicName"] for g in group))
+        first = group[0]
+        node_id = f"schema:{sid}"
+
+        schema_type = first.get("type", "AVRO")
+        label = subjects[0] if len(subjects) == 1 else "Multiple subjects"
+        sub_label = schema_type if len(subjects) == 1 else f"{schema_type} · {len(subjects)} subject(s)"
+
+        nodes.append({
+            "id": node_id,
+            "type": "schema",
+            "data": {
+                "label": label,
+                "subLabel": sub_label,
+                "schemaType": schema_type,
+                "subjects": subjects,
+                "subject": subjects[0],
+                "version": first["version"],
+                "schemaId": sid,
+            }
+        })
+
+        for tn in topic_names_for_schema:
             edges.append({
-                "id": f"{topic_name}->{schema_id}",
-                "source": f"topic:{topic_name}",
-                "target": schema_id,
+                "id": f"{tn}->{node_id}",
+                "source": f"topic:{tn}",
+                "target": node_id,
                 "type": "schema_link",
-                "style": {"strokeDasharray": "3,3", "stroke": "#60a5fa"}
+                "style": {"strokeDasharray": "3,3", "stroke": "#60a5fa"},
             })
 
     result = {"nodes": nodes, "edges": edges}

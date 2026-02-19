@@ -1037,8 +1037,9 @@ class KafkaService:
                     schemas.append({
                         "subject": subject,
                         "version": ver.get("version", 0),
+                        "id": ver.get("id"),
                         "type": ver.get("schemaType", "AVRO"),
-                        "topicName": topic_name,  # Link to topic
+                        "topicName": topic_name,
                     })
                 except Exception as e:
                     logger.debug("subject %s: %s", subject, e)

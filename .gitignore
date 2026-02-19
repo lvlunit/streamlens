@@ -23,3 +23,4 @@ server/debug/__pycache__/
 .env.dev
 
 resources/logs/*
+.vscode/*
