@@ -372,7 +372,7 @@ export default memo(({ data, selected }: { data: any, selected: boolean }) => {
     setShowAclDialog(true);
   };
 
-  const shapeClass = {
+  const shapeMap = {
     topic: "rounded-full",
     producer: "rounded-md",
     consumer: "rounded-3xl",
@@ -380,7 +380,8 @@ export default memo(({ data, selected }: { data: any, selected: boolean }) => {
     connector: "rounded-none node-shape-connector",
     schema: "rounded-tl-2xl rounded-tr-lg rounded-br-xl rounded-bl-lg",
     acl: "rounded-none node-shape-acl",
-  }[data.type as keyof typeof shapeClass] ?? "rounded-xl";
+  } as const;
+  const shapeClass = shapeMap[data.type as keyof typeof shapeMap] ?? "rounded-xl";
 
   return (
     <>
@@ -444,6 +445,14 @@ export default memo(({ data, selected }: { data: any, selected: boolean }) => {
                       {data.type === 'topic' && `Partitions: ${data.details.partitions || 'N/A'}`}
                     </p>
                   )}
+                  {data.type === 'schema' && Array.isArray(data.subjects) && data.subjects.length > 0 && (
+                    <div className="mt-1.5 space-y-0.5">
+                      <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">Subjects ({data.subjects.length})</p>
+                      {data.subjects.map((s: string) => (
+                        <p key={s} className="text-xs font-mono text-blue-400">{s}</p>
+                      ))}
+                    </div>
+                  )}
                   {data.type === 'acl' && data.topic && (
                     <p className="text-xs text-muted-foreground mt-1">
                       Topic: {data.topic}
@@ -480,7 +489,10 @@ export default memo(({ data, selected }: { data: any, selected: boolean }) => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileJson className="w-5 h-5 text-blue-500" />
-              Schema: {data.subject}
+              Schema: {data.label}
+              {data.schemaId && (
+                <span className="text-sm font-normal text-muted-foreground ml-1">(ID: {data.schemaId})</span>
+              )}
             </DialogTitle>
           </DialogHeader>
           
@@ -493,6 +505,23 @@ export default memo(({ data, selected }: { data: any, selected: boolean }) => {
             
             {!isLoadingSchema && schemaDetails && (
               <div className="space-y-4">
+                {/* Associated Subjects */}
+                {Array.isArray(data.subjects) && data.subjects.length > 0 && (
+                  <div className="border border-blue-500/30 bg-blue-950/10 rounded-lg p-4">
+                    <div className="text-sm font-semibold mb-2">Associated Subjects ({data.subjects.length})</div>
+                    <div className="flex flex-wrap gap-2">
+                      {data.subjects.map((s: string) => (
+                        <span
+                          key={s}
+                          className="px-2.5 py-1 rounded-md text-xs font-mono bg-blue-500/15 text-blue-400 border border-blue-500/25"
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Version Selector */}
                 {schemaDetails.allVersions && schemaDetails.allVersions.length > 1 && (
                   <div className="border border-border rounded-lg p-4">
@@ -559,7 +588,6 @@ export default memo(({ data, selected }: { data: any, selected: boolean }) => {
                         }
                         return JSON.stringify(schema, null, 2);
                       } catch (e) {
-                        // If parsing fails, return raw schema
                         return schema;
                       }
                     })()}
