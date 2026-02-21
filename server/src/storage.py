@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
-_SERVER_DIR = Path(__file__).resolve().parent
+_SERVER_DIR = Path(__file__).resolve().parent.parent
 _CLUSTERS_PATH = Path(os.environ.get("CLUSTERS_JSON", _SERVER_DIR / "data" / "clusters.json"))
 _lock = threading.Lock()
 _snapshot_cache: dict[int, dict] = {}
