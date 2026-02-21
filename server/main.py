@@ -14,7 +14,7 @@ _server_dir = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(_server_dir, ".env.dev"))
 load_dotenv(os.path.join(_server_dir, ".env"))
 
-from storage import (
+from src.storage import (
     get_clusters,
     get_cluster,
     create_cluster,
@@ -24,8 +24,8 @@ from storage import (
     create_snapshot,
     sanitize_cluster_for_api,
 )
-from lib.topology import build_topology, paginate_topology_data, search_topology
-from lib.ai import query_topology, get_ai_status
+from src.topology import build_topology, paginate_topology_data, search_topology
+from src.ai import query_topology, get_ai_status
 
 
 class CreateClusterBody(BaseModel):
@@ -67,7 +67,7 @@ def indexer_loop():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from storage import _ensure_clusters_file
+    from src.storage import _ensure_clusters_file
     _ensure_clusters_file()
     t = threading.Thread(target=indexer_loop, daemon=True)
     t.start()
@@ -112,7 +112,7 @@ def clusters_get(id: int):
 
 @app.get("/api/clusters/{id}/health")
 def cluster_health(id: int):
-    from lib.kafka import kafka_service
+    from src.kafka import kafka_service
 
     cluster = get_cluster(id)
     if not cluster:
@@ -240,7 +240,7 @@ def get_schema_details(id: int, subject: str, version: str | None = None):
     Also returns list of all available versions.
     Called on-demand when user clicks on a schema node.
     """
-    from lib.kafka import kafka_service
+    from src.kafka import kafka_service
     
     cluster = get_cluster(id)
     if not cluster:
@@ -266,7 +266,7 @@ def get_topic_code(
     output_topic: str | None = None,  # for client=streams: target topic name
 ):
     """Generate sample producer/consumer/streams code for the topic. Users can copy the code."""
-    from lib.codegen import generate_code
+    from src.codegen import generate_code
 
     cluster = get_cluster(id)
     if not cluster:
@@ -308,7 +308,7 @@ def get_topic_details(id: int, topic_name: str, include_messages: bool = False):
     Optionally fetch recent messages if include_messages=true.
     Called on-demand when user clicks on a topic node.
     """
-    from lib.kafka import kafka_service
+    from src.kafka import kafka_service
     
     cluster = get_cluster(id)
     if not cluster:
@@ -329,7 +329,7 @@ def produce_to_topic(id: int, topic_name: str, body: ProduceMessageBody):
     Produce a single message to a topic. Value is free text; key is optional.
     Enabled only when ENABLE_KAFKA_EVENT_PRODUCE_FROM_UI is set (true/1/yes).
     """
-    from lib.kafka import kafka_service
+    from src.kafka import kafka_service
 
     cluster = get_cluster(id)
     if not cluster:
@@ -371,7 +371,7 @@ def get_connector_details(id: int, connector_name: str):
     Sensitive values are masked.
     Called on-demand when user clicks on a connector node.
     """
-    from lib.kafka import kafka_service
+    from src.kafka import kafka_service
     
     cluster = get_cluster(id)
     if not cluster:
@@ -395,7 +395,7 @@ def get_consumer_lag(id: int, group_id: str):
     Fetch consumer lag per partition for a specific consumer group.
     Called on-demand when user clicks on a consumer node.
     """
-    from lib.kafka import kafka_service
+    from src.kafka import kafka_service
     
     cluster = get_cluster(id)
     if not cluster:
@@ -418,6 +418,26 @@ def ai_query(body: AiQueryBody):
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail="AI processing failed")
+
+
+# ---------------------------------------------------------------------------
+# Serve the built React frontend in production (when client/dist exists).
+# In development the Vite dev server handles this via proxy.
+# ---------------------------------------------------------------------------
+_static_dir = os.path.join(os.path.dirname(_server_dir), "client", "dist")
+if os.path.isdir(_static_dir):
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse
+
+    _index_html = os.path.join(_static_dir, "index.html")
+
+    @app.get("/{full_path:path}")
+    async def _spa_fallback(full_path: str):
+        """Serve static assets or fall back to index.html for SPA routing."""
+        file_path = os.path.join(_static_dir, full_path)
+        if full_path and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(_index_html)
 
 
 if __name__ == "__main__":

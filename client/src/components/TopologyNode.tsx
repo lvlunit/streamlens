@@ -388,6 +388,7 @@ export default memo(({ data, selected }: { data: any, selected: boolean }) => {
       <div 
         className={cn(
           "min-w-[180px] px-4 py-3 bg-card border-2 transition-all duration-300 shadow-xl",
+          data.type === 'connector' && "px-12 py-5",
           shapeClass,
           selected ? "border-primary ring-4 ring-primary/10" : "border-border",
           isHighlighted ? "border-primary shadow-[0_0_20px_hsl(var(--primary)/0.3)] scale-105" : "",

@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from lib.kafka import kafka_service
+from src.kafka import kafka_service
 
 print("=== Testing JMX Producer Detection ===\n")
 

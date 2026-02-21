@@ -9,7 +9,7 @@ from pathlib import Path
 # Add parent directory to path so we can import from server modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from storage import get_clusters, get_cluster, update_cluster
+from src.storage import get_clusters, get_cluster, update_cluster
 
 
 def configure_jmx(cluster_id: int, jmx_host: str, jmx_port: int):
