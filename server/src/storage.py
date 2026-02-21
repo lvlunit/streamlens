@@ -60,48 +60,65 @@ def _bool_from(val) -> bool:
     return str(val).strip().lower() in ("true", "1", "yes")
 
 
+_SSL_FIELD_ALIASES: list[tuple[str, ...]] = [
+    ("securityProtocol", "security_protocol"),
+    ("sslCaLocation", "ssl_ca_location", "ssl.ca.location"),
+    ("sslCertificateLocation", "ssl_certificate_location"),
+    ("sslKeyLocation", "ssl_key_location"),
+    ("sslKeyPassword", "ssl_key_password"),
+    ("sslTruststoreLocation", "ssl_truststore_location"),
+    ("sslTruststorePassword", "ssl_truststore_password"),
+    ("sslKeystoreLocation", "ssl_keystore_location"),
+    ("sslKeystoreType", "ssl_keystore_type"),
+    ("sslKeystorePassword", "ssl_keystore_password"),
+]
+
+
+def _resolve(c: dict, *keys: str):
+    """Return the first non-None value found among the given keys."""
+    for k in keys:
+        val = c.get(k)
+        if val is not None:
+            return val
+    return None
+
+
+def _has_any_key(c: dict, *keys: str) -> bool:
+    return any(k in c for k in keys)
+
+
 def _cluster_from_row(c: dict) -> dict:
     """Normalize to API shape (camelCase, createdAt). Per-cluster enableKafkaEventProduceFromUi and optional SSL."""
     out = {
         "id": c["id"],
         "name": c["name"],
-        "clusterType": c.get("clusterType") or c.get("cluster_type") or None,
-        "bootstrapServers": c.get("bootstrapServers") or c.get("bootstrap_servers") or "",
-        "schemaRegistryUrl": c.get("schemaRegistryUrl") or c.get("schema_registry_url"),
-        "connectUrl": c.get("connectUrl") or c.get("connect_url"),
-        "jmxHost": c.get("jmxHost") or c.get("jmx_host"),
-        "jmxPort": c.get("jmxPort") or c.get("jmx_port"),
-        "createdAt": c.get("createdAt") or c.get("created_at") or "",
+        "clusterType": _resolve(c, "clusterType", "cluster_type"),
+        "bootstrapServers": _resolve(c, "bootstrapServers", "bootstrap_servers") or "",
+        "schemaRegistryUrl": _resolve(c, "schemaRegistryUrl", "schema_registry_url"),
+        "connectUrl": _resolve(c, "connectUrl", "connect_url"),
+        "jmxHost": _resolve(c, "jmxHost", "jmx_host"),
+        "jmxPort": _resolve(c, "jmxPort", "jmx_port"),
+        "createdAt": _resolve(c, "createdAt", "created_at") or "",
         "enableKafkaEventProduceFromUi": _bool_from(
-            c.get("enableKafkaEventProduceFromUi") or c.get("enable_kafka_event_produce_from_ui")
+            _resolve(c, "enableKafkaEventProduceFromUi", "enable_kafka_event_produce_from_ui")
         ),
     }
-    # Optional SSL / security (for connecting on port 9093 SSL, etc.)
-    if c.get("securityProtocol") or c.get("security_protocol"):
-        out["securityProtocol"] = c.get("securityProtocol") or c.get("security_protocol")
-    if c.get("sslCaLocation") or c.get("ssl_ca_location") or c.get("ssl.ca.location"):
-        out["sslCaLocation"] = c.get("sslCaLocation") or c.get("ssl_ca_location") or c.get("ssl.ca.location")
-    if c.get("sslCertificateLocation") or c.get("ssl_certificate_location"):
-        out["sslCertificateLocation"] = c.get("sslCertificateLocation") or c.get("ssl_certificate_location")
-    if c.get("sslKeyLocation") or c.get("ssl_key_location"):
-        out["sslKeyLocation"] = c.get("sslKeyLocation") or c.get("ssl_key_location")
-    if c.get("sslKeyPassword") or c.get("ssl_key_password"):
-        out["sslKeyPassword"] = c.get("sslKeyPassword") or c.get("ssl_key_password")
-    if c.get("sslTruststoreLocation") or c.get("ssl_truststore_location"):
-        out["sslTruststoreLocation"] = c.get("sslTruststoreLocation") or c.get("ssl_truststore_location")
-    if c.get("sslTruststorePassword") or c.get("ssl_truststore_password"):
-        out["sslTruststorePassword"] = c.get("sslTruststorePassword") or c.get("ssl_truststore_password")
-    if c.get("sslKeystoreLocation") or c.get("ssl_keystore_location"):
-        out["sslKeystoreLocation"] = c.get("sslKeystoreLocation") or c.get("ssl_keystore_location")
-    if c.get("sslKeystoreType") or c.get("ssl_keystore_type"):
-        out["sslKeystoreType"] = c.get("sslKeystoreType") or c.get("ssl_keystore_type")
-    if c.get("sslKeystorePassword") or c.get("ssl_keystore_password"):
-        out["sslKeystorePassword"] = c.get("sslKeystorePassword") or c.get("ssl_keystore_password")
-    if "sslEndpointIdentificationAlgorithm" in c or "ssl_endpoint_identification_algorithm" in c:
-        out["sslEndpointIdentificationAlgorithm"] = c.get("sslEndpointIdentificationAlgorithm") or c.get("ssl_endpoint_identification_algorithm") or ""
-    if "enableSslCertificateVerification" in c or "enable_ssl_certificate_verification" in c:
-        val = c.get("enableSslCertificateVerification") if c.get("enableSslCertificateVerification") is not None else c.get("enable_ssl_certificate_verification")
+
+    for aliases in _SSL_FIELD_ALIASES:
+        val = _resolve(c, *aliases)
+        if val is not None:
+            out[aliases[0]] = val
+
+    # These two need special defaults: "" and True respectively, even when the
+    # key is present but the value is None/falsy.
+    if _has_any_key(c, "sslEndpointIdentificationAlgorithm", "ssl_endpoint_identification_algorithm"):
+        out["sslEndpointIdentificationAlgorithm"] = (
+            _resolve(c, "sslEndpointIdentificationAlgorithm", "ssl_endpoint_identification_algorithm") or ""
+        )
+    if _has_any_key(c, "enableSslCertificateVerification", "enable_ssl_certificate_verification"):
+        val = _resolve(c, "enableSslCertificateVerification", "enable_ssl_certificate_verification")
         out["enableSslCertificateVerification"] = val if val is not None else True
+
     return out
 
 
@@ -164,7 +181,7 @@ def update_cluster(
                 enable_kafka_event_produce_from_ui = _bool_from(
                     existing.get("enableKafkaEventProduceFromUi") or existing.get("enable_kafka_event_produce_from_ui")
                 )
-            clusters[i] = {
+            updated = {
                 "id": id,
                 "name": name,
                 "bootstrapServers": bootstrap_servers,
@@ -172,21 +189,17 @@ def update_cluster(
                 "connectUrl": connect_url,
                 "jmxHost": jmx_host,
                 "jmxPort": jmx_port,
-                "createdAt": existing.get("createdAt") or existing.get("created_at") or "",
+                "createdAt": _resolve(existing, "createdAt", "created_at") or "",
                 "enableKafkaEventProduceFromUi": enable_kafka_event_produce_from_ui,
-                "securityProtocol": existing.get("securityProtocol") or existing.get("security_protocol"),
-                "sslCaLocation": existing.get("sslCaLocation") or existing.get("ssl_ca_location"),
-                "sslCertificateLocation": existing.get("sslCertificateLocation") or existing.get("ssl_certificate_location"),
-                "sslKeyLocation": existing.get("sslKeyLocation") or existing.get("ssl_key_location"),
-                "sslKeyPassword": existing.get("sslKeyPassword") or existing.get("ssl_key_password"),
-                "sslTruststoreLocation": existing.get("sslTruststoreLocation") or existing.get("ssl_truststore_location"),
-                "sslTruststorePassword": existing.get("sslTruststorePassword") or existing.get("ssl_truststore_password"),
-                "sslKeystoreLocation": existing.get("sslKeystoreLocation") or existing.get("ssl_keystore_location"),
-                "sslKeystoreType": existing.get("sslKeystoreType") or existing.get("ssl_keystore_type"),
-                "sslKeystorePassword": existing.get("sslKeystorePassword") or existing.get("ssl_keystore_password"),
-                "sslEndpointIdentificationAlgorithm": existing.get("sslEndpointIdentificationAlgorithm") or existing.get("ssl_endpoint_identification_algorithm"),
-                "enableSslCertificateVerification": existing.get("enableSslCertificateVerification") if existing.get("enableSslCertificateVerification") is not None else existing.get("enable_ssl_certificate_verification"),
             }
+            for aliases in _SSL_FIELD_ALIASES:
+                updated[aliases[0]] = _resolve(existing, *aliases)
+            updated["sslEndpointIdentificationAlgorithm"] = _resolve(
+                existing, "sslEndpointIdentificationAlgorithm", "ssl_endpoint_identification_algorithm"
+            )
+            val = _resolve(existing, "enableSslCertificateVerification", "enable_ssl_certificate_verification")
+            updated["enableSslCertificateVerification"] = val if val is not None else existing.get("enable_ssl_certificate_verification")
+            clusters[i] = updated
             _write_clusters(clusters)
             return _cluster_from_row(clusters[i])
     return None

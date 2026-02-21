@@ -1,4 +1,4 @@
-# StreamLens
+# streamLens
 
 A full-stack app for visualizing Apache Kafka topologies — topics, producers, consumers, streams, schemas, connectors, and ACLs — with an optional AI assistant.
 
@@ -19,6 +19,17 @@ A full-stack app for visualizing Apache Kafka topologies — topics, producers, 
 - **Dark / light theme** — Toggle between themes
 
 ## Quick Start
+
+### Docker (recommended)
+
+```bash
+docker build -f container/Dockerfile -t streamlens .
+docker run -p 5000:5000 streamlens
+```
+
+Open http://localhost:5000. See [container/README.md](container/README.md) for volume mounts and environment variables.
+
+### Local development
 
 **Backend**
 
@@ -44,6 +55,7 @@ Open http://localhost:5173. The dev server proxies `/api` to the backend. Set `V
 
 - **client/** — React frontend (Vite, TypeScript, Tailwind, shadcn/ui)
 - **server/** — Python backend (FastAPI)
+- **container/** — Dockerfile and Docker Compose for deployment and testing
 - **docs/** — Additional documentation ([AI setup](docs/AI_SETUP.md), [topology](docs/TOPOLOGY.md))
 
 ## Configuration
