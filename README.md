@@ -10,6 +10,10 @@
   <img src="resources/StreamLens.gif" alt="StreamLens" width="700" />
 </p>
 
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=lQIdaqVqgtk">Watch the full setup and demo on YouTube</a>
+</p>
+
 ## Features
 
 - **Live topology visualization** — Interactive graph of your Kafka cluster powered by React Flow
