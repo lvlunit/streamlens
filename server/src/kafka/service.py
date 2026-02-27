@@ -10,7 +10,6 @@ from .connectors import fetch_connector_details, fetch_connectors
 from .consumers import fetch_consumer_groups, fetch_consumer_lag
 from .producers import detect_producers_by_offset_change, fetch_acl_producers, fetch_jmx_producers
 from .schemas import fetch_schema_details, fetch_schemas
-from .streams import load_streams_config
 from .topics import fetch_topic_details, fetch_topics, produce_message
 
 logger = logging.getLogger(__name__)
@@ -70,7 +69,7 @@ class KafkaService:
 
             topic_names = [t["name"] for t in state["topics"] if not (t.get("name") or "").startswith("__")]
             state["acls"] = fetch_topic_acls(admin, topic_names)
-            state["streams"] = load_streams_config()
+            state["streams"] = []
         except Exception as e:
             logger.exception("Kafka broker error: %s", e)
             raise RuntimeError(f"Cannot connect to Kafka at {bootstrap}: {e}") from e

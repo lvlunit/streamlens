@@ -22,7 +22,6 @@
 - **Consumer lag** — Click any consumer node to view per-partition lag
 - **Topic details** — Click any topic node to view configuration, recent messages, and generate sample client code (Java / Python)
 - **Connector details** — Click connector nodes to inspect configuration (sensitive values masked)
-- **Kafka Streams** — Visualize stream processing pipelines (input → output) via `streams.yaml`
 - **Producer detection** — Via JMX metrics, ACL WRITE permissions, or offset-change detection
 - **Search & navigation** — Find nodes by name or type, auto-zoom to matches, keyboard navigation (Enter / Shift+Enter)
 - **Topic pagination** — Large clusters load incrementally (connected topics first), with search across all topics
