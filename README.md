@@ -96,6 +96,34 @@ Clusters are stored in `server/data/clusters.json` (no database required). Add c
       "prometheusUrl": "http://prometheus:9090",
       "jmxHost": "localhost",
       "jmxPort": 9999
+    },
+    {
+        "id": 2,
+        "name": "oauthbearer_cluster",
+        "bootstrapServers": "your_bootstrap_url",
+        "securityProtocol": "SASL_SSL",
+        "saslMechanism": "OAUTHBEARER",
+        "saslOauthbearerClientId": "streamlens_clientId",
+        "saslOauthbearerClientSecret": "streamlens_clientSecret",
+        "saslOauthbearerTokenEndpointUrl": "your_keycloak_token_url",
+        "sslTruststoreLocation": "your.truststore.jks",
+        "sslTruststorePassword": "your_truststore_password",
+        "sslEndpointIdentificationAlgorithm": "",
+        "enableSslCertificateVerification": true
+    },
+    {
+        "id": 3,
+        "name": "scram_cluster",
+        "bootstrapServers": "your_bootstrap_url",
+        "clusterType": "Apache Kafka",
+        "securityProtocol": "SASL_SSL",
+        "saslMechanism": "SCRAM-SHA-256",
+        "saslUsername": "streamlens_user",
+        "saslPassword": "streamlens_password",
+        "sslTruststoreLocation": "your.truststore.jks",
+        "sslTruststorePassword": "your_truststore_password",
+        "sslEndpointIdentificationAlgorithm": "",
+        "enableSslCertificateVerification": true
     }
   ]
 }
@@ -114,11 +142,14 @@ Override the file path with the `CLUSTERS_JSON` env var.
 
 ### Supported Protocols
 
-streamLens currently supports **PLAINTEXT** and **SSL** Kafka listener protocols.
+streamLens currently supports **SASL_SSL**, **PLAINTEXT**, and **SSL** Kafka listener protocols.
 
-For SSL connections, add these fields to the cluster object:
+For SSL and SASL_SSL connections, add these fields to the cluster object:
 
-- `securityProtocol` — `"SSL"` or `"PLAINTEXT"` (default)
+- `securityProtocol` — `"SASL_SSL"`, `"SSL"` or `"PLAINTEXT"` (default)
+- `saslMechanism` — `"OAUTHBEARER"`, `"SCRAM-SHA-512"`, `"SCRAM-SHA-256"` or `"PLAIN"`
+- **Scram Authentication:** `saslUsername`, `saslPassword`
+- **OAUTHBEARER Authentication:** `saslOauthbearerMethod`, `saslOauthbearerClientId`, `saslOauthbearerClientSecret`, `saslOauthbearerTokenEndpointUrl`
 - `sslEndpointIdentificationAlgorithm` — `""` to disable hostname verification (dev/self-signed)
 - **PEM paths:** `sslCaLocation`, `sslCertificateLocation`, `sslKeyLocation`, `sslKeyPassword`
 - **Java truststore/keystore** (auto-converted to PEM; requires `keytool` + `openssl`): `sslTruststoreLocation`, `sslTruststorePassword`, `sslKeystoreLocation`, `sslKeystoreType`, `sslKeystorePassword`, `sslKeyPassword`

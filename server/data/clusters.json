@@ -36,6 +36,42 @@
       "sslKeyPassword": "pwd",
       "sslCaLocation": "/certs/ca.pem",
       "enableSslCertificateVerification": true
+    },
+    {
+        "id": 3,
+        "name": "oauthbearer_test",
+        "bootstrapServers": "localhost:9092",
+        "clusterType": "Apache Kafka",
+        "securityProtocol": "SASL_SSL",
+        "saslMechanism": "OAUTHBEARER",
+        "saslOauthbearerMethod": "oidc",
+        "saslOauthbearerClientId": "your_oauthbearer_client_id",
+        "saslOauthbearerClientSecret": "your_oauthbearer_client_secret",
+        "saslOauthbearerTokenEndpointUrl": "https://keycloakhost:8443/realms/master/protocol/openid-connect/token",
+        "sslTruststoreLocation": "/certs/client.truststore.jks",
+        "sslTruststorePassword": "pwd",
+        "sslEndpointIdentificationAlgorithm": "",
+        "enableSslCertificateVerification": true,
+        "jmxHost": "broker1.dahbest.kfn",
+        "jmxPort": 9999,
+        "createdAt": "2026-03-07T00:00:00Z"
+    },
+    {
+        "id": 4,
+        "name": "scram_test",
+        "bootstrapServers": "localhost:9092",
+        "clusterType": "Apache Kafka",
+        "securityProtocol": "SASL_SSL",
+        "saslMechanism": "SCRAM-SHA-256",
+        "saslUsername": "your_scram_username",
+        "saslPassword": "your_scram_password",
+        "sslTruststoreLocation": "/certs/client.truststore.jks",
+        "sslTruststorePassword": "pwd",
+        "sslEndpointIdentificationAlgorithm": "",
+        "enableSslCertificateVerification": true,
+        "jmxHost": null,
+        "jmxPort": null,
+        "createdAt": "2026-02-20T00:00:00Z"
     }
   ]
 }
