@@ -24,6 +24,7 @@ jobs:
         env:
           KIRO_API_KEY: ${{ secrets.KIRO_API_KEY }}
         run: |
-          kiro-cli --agent code-reviewer \
+          kiro-cli chat --agent code-reviewer \
             --no-interactive \
+            --trust-all-tools \
             "Review the codebase for security issues, bugs, and best practices. Focus on recent changes."
