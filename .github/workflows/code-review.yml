@@ -1,17 +1,18 @@
-name: Kiro Code Review
+name: Code Review
 
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   code-review:
-    name: Kiro Code Review
+    name: Code Review
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
