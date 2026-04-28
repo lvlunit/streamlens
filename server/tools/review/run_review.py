@@ -55,13 +55,18 @@ def main() -> None:
 
     result = run_review(pr_context)
 
-    # Exit with code 1 if any ERROR-severity findings exist
-    error_count = sum(1 for f in result.findings if f.severity == Severity.ERROR)
+    # Exit with code 1 only if ERROR-severity findings exist on changed lines.
+    # Pre-existing issues outside the diff should not block PRs.
+    from tools.review.diff import compute_diff_positions, filter_to_diff_lines
+
+    diff_mappings = compute_diff_positions(pr_context.base_sha, pr_context.head_sha)
+    visible_findings = filter_to_diff_lines(result.findings, diff_mappings)
+    error_count = sum(1 for f in visible_findings if f.severity == Severity.ERROR)
     if error_count > 0:
-        print(f"Review complete: {error_count} error(s) found.", file=sys.stderr)
+        print(f"Review complete: {error_count} error(s) found on changed lines.", file=sys.stderr)
         sys.exit(1)
 
-    print("Review complete: no errors found.")
+    print("Review complete: no errors on changed lines.")
 
 
 if __name__ == "__main__":

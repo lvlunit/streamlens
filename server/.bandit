@@ -1,0 +1,4 @@
+[bandit]
+# Skip B404 (import subprocess) and B607 (partial path) - we intentionally
+# use subprocess with shell=False and hardcoded tool names for security.
+skips: B404,B607
