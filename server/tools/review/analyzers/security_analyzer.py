@@ -61,7 +61,7 @@ class SecurityAnalyzer(BaseAnalyzer):
         """Execute ``bandit -f json`` on the given Python files."""
         try:
             result = subprocess.run(
-                ["bandit", "-f", "json", *files],
+                ["bandit", "-f", "json", "--skip", "B404,B607", *files],
                 capture_output=True,
                 text=True,
                 shell=False,
